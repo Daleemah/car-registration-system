@@ -1,26 +1,30 @@
 const express = require('express');
-const authorRoutes = require('./routes/authorRoutes');
-const bookRoutes = require('./routes/bookRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const attendantRoutes = require('./routes/attendantRoutes');
-
 const app = express();
+
 app.use(express.json());
 
-// MongoDB connection
-const mongoose = require('mongoose');
+app.get('/', (req, res) => {
+  res.send('Banking API is running');
+});
 
-const uri ="mongodb+srv://adelanihalimah5_db_user:adelanihalimah5_db_user@cluster0.pseblcn.mongodb.net/sample_mflix?retryWrites=true&w=majority";
-mongoose.connect(uri)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+const onboardRoutes = require('./routes/onboardRoutes');
+app.use('/onboard', onboardRoutes);
 
-// Routes
-app.use('/authors', authorRoutes);
-app.use('/books', bookRoutes);
-app.use('/students', studentRoutes);
-app.use('/attendants', attendantRoutes);
+const customerRoutes = require('./routes/customerRoutes');
+app.use('/customers', customerRoutes);
 
-const PORT = 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));0
+const transferRoutes = require('./routes/transferRoutes');
+app.use('/transfer', transferRoutes);
 
+const transactionRoutes = require('./routes/transactionRoutes');
+app.use('/transactions', transactionRoutes);
+
+const balanceRoutes = require('./routes/balanceRoutes');
+app.use('/balance', balanceRoutes);
+
+const nameRoutes = require('./routes/nameEnquiryRoutes');
+app.use('/name', nameRoutes);
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+})
