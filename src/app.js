@@ -19,7 +19,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // Routes (you'll add more as the project grows)
-// app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 // Health Check
 app.get('/', (req, res) => {
