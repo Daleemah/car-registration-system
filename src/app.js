@@ -20,10 +20,16 @@ app.use(morgan('dev'));
 
 // Routes (you'll add more as the project grows)
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/registrations', require('./routes/registrationRoutes'));
 
 // Health Check
 app.get('/', (req, res) => {
   res.json({ message: 'Car Registration API is running' });
+});
+
+// ── 404 Handler ───────────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.originalUrl}` });
 });
 
 // Centralized Error Handler

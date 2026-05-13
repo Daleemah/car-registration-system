@@ -1,19 +1,22 @@
-const User = require('../models/userModel.js');
+const { User } = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 // REGISTER
-const register = async (req, res, next) => {
+const register = async (req, res) => {
   try {
-    const { fullName, email, password, phone, address, nin } = req.body;
+    console.log("BODY:", req.body);
 
-    // Check if user already exists
+    const { fullName, email, password, phone, address, nin, role } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already in use' });
     }
 
-    // Create new user
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
       fullName,
       email,
@@ -21,9 +24,10 @@ const register = async (req, res, next) => {
       phone,
       address,
       nin,
+      role,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Account created successfully',
       data: {
@@ -33,8 +37,14 @@ const register = async (req, res, next) => {
         role: user.role,
       },
     });
+
   } catch (error) {
-    next(error);
+    console.error("REGISTER ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error during registration',
+    });
   }
 };
 
@@ -43,6 +53,13 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required',
+      });
+    }
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
@@ -74,17 +91,39 @@ const login = async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    console.error("LOGIN ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during login',
+    });
   }
 };
 
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    res.status(200).json({ success: true, data: user });
+    res.status(200).json({
+      success: true,
+      data: {
+        id: req.user._id,
+        fullName: req.user.fullName,
+        email: req.user.email,
+        phone: req.user.phone,
+        address: req.user.address,
+        nin: req.user.nin,
+        role: req.user.role,
+        isActive: req.user.isActive,
+        createdAt: req.user.createdAt,
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
 
-module.exports = { register, login, getMe };
+// ── LOGOUT ────────────────────────────────────────────────────────────────────
+const logout = (req, res) => {
+  res.status(200).json({ success: true, message: 'Logged out successfully' });
+};
+
+module.exports = { register, login, getMe, logout };

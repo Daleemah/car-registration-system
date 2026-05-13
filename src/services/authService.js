@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const { User } = require("../models/User");
 const { ApiError } = require("../utils/ApiError");
 
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 10;
 
 async function register(email, fullName, password) {
   const existing = await User.findOne({ email });

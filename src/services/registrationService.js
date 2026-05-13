@@ -1,4 +1,4 @@
-const { Registration } = require("../models/Registration");
+const { Registration, STATUSES } = require("../models/registrationModel");
 const { ApiError } = require("../utils/ApiError");
 const { generatePlate } = require("../utils/plate");
 
