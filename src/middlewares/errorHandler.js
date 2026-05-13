@@ -1,6 +1,5 @@
 const { ApiError } = require("../utils/ApiError");
 
-
 function notFound(req, res, next) {
   next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 }
@@ -24,7 +23,7 @@ function errorHandler(err, req, res, next) {
     message = `Duplicate value for '${field}'`;
   }
 
-  // JWT errors (in case they bubble up outside auth middleware)
+  // JWT errors
   if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
     statusCode = 401;
     message = "Invalid or expired token";
@@ -45,9 +44,8 @@ function errorHandler(err, req, res, next) {
     payload.stack = err.stack;
   }
 
-  // Log server-side errors
+  // Log server-side errors to console only (database logging is handled by errorLoggerMiddleware)
   if (statusCode >= 500) {
-    // eslint-disable-next-line no-console
     console.error({
       requestId: req.requestId,
       error: message,

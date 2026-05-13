@@ -173,7 +173,13 @@ const login = async (req, res) => {
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     console.error("Error details:", error.stack);
-
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'login',
+      severity: error.statusCode === 401 ? 'low' : 'medium',
+      statusCode: error.statusCode || 500,
+      customData: { email: req.body?.email }
+    });
     return res.status(500).json({
       success: false,
       message: 'Server error during login',
