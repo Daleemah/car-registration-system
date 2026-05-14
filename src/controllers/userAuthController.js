@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { ActivityLogger } = require('../services/activityLogService');
+const ErrorLogService = require('../services/errorLogService'); 
 
 // REGISTER
 const register = async (req, res) => {
@@ -64,6 +65,15 @@ const register = async (req, res) => {
 
   } catch (error) {
     console.error("REGISTER ERROR:", error);
+
+    // Log error to database
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'register',
+      severity: 'medium',
+      statusCode: 500,
+      customData: { email: req.body?.email }
+    }).catch(console.error);
 
     return res.status(500).json({
       success: false,
@@ -141,10 +151,10 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
-    // Log successful login - Use logUserAction instead of logActivity
+    // Log successful login
     await ActivityLogger.logUserAction(
       user._id,
       'login',
@@ -173,21 +183,25 @@ const login = async (req, res) => {
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     console.error("Error details:", error.stack);
-    await ErrorLogService.logError(error, req, {
+    
+    // Log error to database (don't await to avoid blocking)
+    ErrorLogService.logError(error, req, {
       service: 'auth',
       operation: 'login',
       severity: error.statusCode === 401 ? 'low' : 'medium',
       statusCode: error.statusCode || 500,
       customData: { email: req.body?.email }
-    });
+    }).catch(console.error);
+    
     return res.status(500).json({
       success: false,
       message: 'Server error during login',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
     });
   }
 };
 
+// GET ME
 const getMe = async (req, res, next) => {
   try {
     res.status(200).json({
@@ -209,7 +223,7 @@ const getMe = async (req, res, next) => {
   }
 };
 
-// ── LOGOUT ────────────────────────────────────────────────────────────────────
+// LOGOUT
 const logout = async (req, res) => {
   try {
     // Log logout action
@@ -232,6 +246,15 @@ const logout = async (req, res) => {
     });
   } catch (error) {
     console.error("LOGOUT ERROR:", error);
+    
+    // Log error to database
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'logout',
+      severity: 'low',
+      statusCode: 500
+    }).catch(console.error);
+    
     res.status(500).json({ 
       success: false, 
       message: 'Error during logout' 
@@ -239,7 +262,7 @@ const logout = async (req, res) => {
   }
 };
 
-// UPDATE USER PROFILE (Optional - with change tracking)
+// UPDATE USER PROFILE
 const updateProfile = async (req, res) => {
   try {
     const updates = req.body;
@@ -300,6 +323,15 @@ const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("UPDATE PROFILE ERROR:", error);
+    
+    // Log error to database
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'updateProfile',
+      severity: 'medium',
+      statusCode: 500
+    }).catch(console.error);
+    
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -324,6 +356,15 @@ const getAllUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("GET ALL USERS ERROR:", error);
+    
+    // Log error to database
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'getAllUsers',
+      severity: 'medium',
+      statusCode: 500
+    }).catch(console.error);
+    
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };

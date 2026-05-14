@@ -1,7 +1,7 @@
 const { ApiError } = require("./ApiError");
 
-function validateBody(schema) {
-  return function (req, res, next) {
+const validateBody = (schema) => {
+  return (req, res, next) => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
       return next(new ApiError(400, "Validation error", result.error.flatten()));
