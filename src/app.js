@@ -26,6 +26,7 @@ app.use(requestLogger); // Optional: for console logging
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/registrations', require('./routes/registrationRoutes'));
+app.use("/api/admin/dashboard", require("./routes/adminDashboardRoutes"));
 
 // Health Check
 app.get('/', (req, res) => {
