@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs')
 
+const ROLES = ["admin", "staff", "user"];
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -28,10 +29,13 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   role: {
-    type: String,
-    enum: ['user', 'staff', 'admin'],
-    default: 'user',
-  },
+      type: String,
+      enum: ROLES,
+      default: "user",
+    },
+    isActive: { type: Boolean, default: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 }, { timestamps: true });
 
 userSchema.pre("save", async function() {
@@ -40,8 +44,15 @@ userSchema.pre("save", async function() {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-userSchema.methods.matchPassword = async function(enteredPassword) {
+userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
-}
+};
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.methods.toSafeObject = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  return obj;
+};
+
+const User = mongoose.model('User', userSchema);
+module.exports = { User, ROLES };
