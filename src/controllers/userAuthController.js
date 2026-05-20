@@ -336,6 +336,275 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// CHANGE PASSWORD
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current password, new password, and confirmation'
+      });
+    }
+
+    // Check if new password and confirmation match
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirmation do not match'
+      });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 8 characters long'
+      });
+    }
+
+    // Get user with password field
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      // Log failed attempt
+      await ActivityLogger.logUserAction(
+        user._id,
+        'change_password_failed',
+        `Failed password change attempt - incorrect current password`,
+        {
+          ip: req.ip,
+          userAgent: req.get('user-agent'),
+          additionalData: { email: user.email }
+        }
+      );
+
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Check if new password is same as current
+    const isSamePassword = await user.matchPassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password cannot be the same as current password'
+      });
+    }
+
+    // Update password (let schema handle hashing)
+    user.password = newPassword;
+    await user.save();
+
+    // Log successful password change
+    await ActivityLogger.logUserAction(
+      user._id,
+      'change_password_success',
+      `User changed password successfully`,
+      {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        additionalData: { email: user.email }
+      }
+    );
+
+    // Optional: Send email notification about password change
+    // await sendPasswordChangeNotification(user.email, user.fullName);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully. Please login with your new password.'
+    });
+
+  } catch (error) {
+    console.error("CHANGE PASSWORD ERROR:", error);
+    
+    // Log error to database
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'changePassword',
+      severity: 'medium',
+      statusCode: 500,
+      customData: { userId: req.user?._id }
+    }).catch(console.error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error while changing password'
+    });
+  }
+};
+
+// FORGOT PASSWORD - Request reset token
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide your email address'
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal that user doesn't exist for security reasons
+      return res.status(200).json({
+        success: true,
+        message: 'If your email is registered, you will receive a password reset link'
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
+
+    // Save reset token to user (add these fields to user model if needed)
+    user.resetPasswordToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    // Log password reset request
+    await ActivityLogger.logUserAction(
+      user._id,
+      'forgot_password_requested',
+      `User requested password reset`,
+      {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        additionalData: { email: user.email }
+      }
+    );
+
+    // TODO: Send email with reset link
+    // const resetUrl = `${process.env.APP_URL}/reset-password/${resetToken}`;
+    // await sendPasswordResetEmail(user.email, user.fullName, resetUrl);
+
+    res.status(200).json({
+      success: true,
+      message: 'If your email is registered, you will receive a password reset link',
+      // Only include token in development for testing
+      ...(process.env.NODE_ENV === 'development' && { resetToken })
+    });
+
+  } catch (error) {
+    console.error("FORGOT PASSWORD ERROR:", error);
+    
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'forgotPassword',
+      severity: 'medium',
+      statusCode: 500
+    }).catch(console.error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error processing your request'
+    });
+  }
+};
+
+// RESET PASSWORD - Use reset token
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide reset token and new password'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long'
+      });
+    }
+
+    // Hash the token to compare with stored hash
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find user with valid reset token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token'
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    // Log successful password reset
+    await ActivityLogger.logUserAction(
+      user._id,
+      'reset_password_success',
+      `User reset password successfully`,
+      {
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        additionalData: { email: user.email }
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. Please login with your new password.'
+    });
+
+  } catch (error) {
+    console.error("RESET PASSWORD ERROR:", error);
+    
+    await ErrorLogService.logError(error, req, {
+      service: 'auth',
+      operation: 'resetPassword',
+      severity: 'medium',
+      statusCode: 500
+    }).catch(console.error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error resetting password'
+    });
+  }
+};
+
 // ADMIN: GET ALL USERS WITH ACTIVITY
 const getAllUsers = async (req, res) => {
   try {
@@ -369,4 +638,4 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, logout, updateProfile, getAllUsers };
+module.exports = { register, login, getMe, logout, updateProfile, changePassword, forgotPassword, resetPassword, getAllUsers };
