@@ -20,7 +20,7 @@ const router = Router();
 // Create a new registration draft
 router.post(
   "/", 
-  requireAuth, 
+  // requireAuth, 
   validateBody(createRegistrationSchema), 
   ctrl.createRegistration
 );
@@ -38,7 +38,7 @@ router.put(
   validateBody(updateRegistrationSchema), 
   ctrl.updateRegistration
 );
-
+ 
 // Delete a draft or rejected registration
 router.delete("/:id", requireAuth, ctrl.deleteRegistration);
 

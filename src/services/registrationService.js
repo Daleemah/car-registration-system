@@ -93,7 +93,7 @@ async function getRegistrationById(id) {
   return reg;
 }
 
-async function listRegistrations(filters, userId, userRole) {
+async function listRegistrations(filters, userId, userRole, pagination) {
   const query = {};
 
   // Regular users only see their own records
@@ -102,11 +102,17 @@ async function listRegistrations(filters, userId, userRole) {
   if (filters.status) query.status = filters.status;
   if (filters.vehicleClass) query["vehicle.vehicleClass"] = filters.vehicleClass;
 
-  return Registration.find(query)
+  const totalCount = await Registration.countDocuments(query);
+  
+  const data = await Registration.find(query)
     .populate("applicantId", "fullName email")
     .populate("staffReview.reviewedBy", "fullName email")
     .populate("adminReview.reviewedBy", "fullName email")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .skip(pagination.skip)
+    .limit(pagination.limit);
+  
+  return { data, totalCount };
 }
 
 async function updateRegistration(id, applicantId, data, metadata = {}) {
