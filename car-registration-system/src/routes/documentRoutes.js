@@ -1,5 +1,4 @@
 const express = require('express');
-
 const router = express.Router();
 
 const {
@@ -9,13 +8,19 @@ const {
   rejectDocument
 } = require('../controllers/documentController');
 
-router.post('/', submitDocument);
+const { protect, requireRole } = require('../middlewares/authMiddleware');
 
-router.get('/:vehicleId', getVehicleDocuments);
+// Submit document
+router.post('/', protect, submitDocument);
 
-router.put('/:id/verify', verifyDocument);
+// Get documents for a vehicle
+router.get('/:vehicleId', protect, getVehicleDocuments);
 
-router.put('/:id/reject', rejectDocument);
+// Verify document (staff only)
+router.put('/:id/verify', protect, requireRole('staff'), verifyDocument);
+
+// Reject document (staff only)
+router.put('/:id/reject', protect, requireRole('staff'), rejectDocument);
 
 module.exports = router;0
 

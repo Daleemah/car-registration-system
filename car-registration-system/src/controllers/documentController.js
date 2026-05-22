@@ -7,7 +7,7 @@ const submitDocument = async (req, res) => {
       vehicleId: req.body.vehicleId,
       documentType: req.body.documentType,
       fileUrl: req.body.fileUrl,
-      submittedBy: req.body.submittedBy
+      submittedBy: req.user._id      
     });
 
     res.status(201).json(document);
