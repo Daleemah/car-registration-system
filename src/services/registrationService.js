@@ -102,6 +102,38 @@ async function listRegistrations(filters, userId, userRole, pagination) {
   if (filters.status) query.status = filters.status;
   if (filters.vehicleClass) query["vehicle.vehicleClass"] = filters.vehicleClass;
 
+  // Search across multiple fields
+  if (filters.search) {
+    query.$or = [
+
+      {"vehicle.vin": {
+        $regex: filters.search,
+        $options: "i"
+       }
+     },
+
+      {
+        "vehicle.make": {
+          $regex: filters.search,
+          $options: "i"
+        }
+      },
+
+      {
+        "vehicle.model": {
+          $regex: filters.search,
+          $options: "i"
+        }
+      },
+
+      {
+        "plateNumber": {
+          $regex: filters.search,
+          $options: "i"
+        }
+      }
+    ];
+  }
   const totalCount = await Registration.countDocuments(query);
   
   const data = await Registration.find(query)

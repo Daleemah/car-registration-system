@@ -20,7 +20,7 @@ const router = Router();
 // Create a new registration draft
 router.post(
   "/", 
-  // requireAuth, 
+  requireAuth, 
   validateBody(createRegistrationSchema), 
   ctrl.createRegistration
 );

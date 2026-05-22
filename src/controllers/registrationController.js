@@ -16,6 +16,7 @@ const listRegistrations = asyncHandler(async (req, res) => {
   const filters = {
     status: req.query.status,
     vehicleClass: req.query.vehicleClass,
+    search: req.query.search
   };
 
   const page = Number(req.query.page) || 1;
@@ -35,8 +36,8 @@ const listRegistrations = asyncHandler(async (req, res) => {
   );
   res.json({ 
     success: true, 
-    count: regs.length, 
-    data: regs,
+    count: regs.data.length, 
+    data: regs.data,
     page,
     limit: perpage,
     total: regs.totalCount,
