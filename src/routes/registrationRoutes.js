@@ -38,7 +38,7 @@ router.put(
   validateBody(updateRegistrationSchema), 
   ctrl.updateRegistration
 );
-
+ 
 // Delete a draft or rejected registration
 router.delete("/:id", requireAuth, ctrl.deleteRegistration);
 
