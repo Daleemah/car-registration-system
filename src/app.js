@@ -36,7 +36,11 @@ app.use('/api/', limiter);
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/registrations', require('./routes/registrationRoutes'));
-app.use('/api/expiry', require('./routes/expiryRoutes')); // ✅ Add expiry routes
+app.use("/api/admin/dashboard", require("./routes/adminDashboardRoutes"));
+
+
+// app.use('/api/expiry', require('./routes/expiryRoutes')); // ✅ Add expiry routes
+
 
 // Health Check
 app.get('/', (req, res) => {
