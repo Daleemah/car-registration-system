@@ -1,7 +1,8 @@
 const { asyncHandler } = require("../utils/asyncHandler");
 const registrationService = require("../services/registrationService");
-const emailService = require("../services/emailService"); // ✅ Add this import
-const { User } = require("../models/userModel"); // ✅ Add this import
+const emailService = require("../services/emailService"); 
+const { User } = require("../models/userModel");
+const paginate = require("../utils/paginate");
 
 // ==================== USER METHODS ====================
 const createRegistration = asyncHandler(async (req, res) => {
@@ -21,13 +22,34 @@ const listRegistrations = asyncHandler(async (req, res) => {
   const filters = {
     status: req.query.status,
     vehicleClass: req.query.vehicleClass,
+    search: req.query.search
   };
+
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const { skip, limit: perpage } = paginate(page, limit);
+
+
   const regs = await registrationService.listRegistrations(
     filters, 
     req.user._id, 
-    req.user.role
+    req.user.role,
+    {
+      skip,
+      limit: perpage,
+    }
   );
-  res.json({ success: true, count: regs.length, data: regs });
+  res.json({ 
+    success: true, 
+    count: regs.data.length, 
+    data: regs.data,
+    page,
+    limit: perpage,
+    total: regs.totalCount,
+    totalPages: Math.ceil(regs.totalCount / perpage)
+  });
+  
 });
 
 const getRegistration = asyncHandler(async (req, res) => {

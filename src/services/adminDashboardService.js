@@ -1,11 +1,46 @@
-const { User } = require('../models/userModel');
-const { Registration } = require('../models/registrationModel');
-const { ActivityLogger } = require('./activityLogService');
+const { Registration } = require("../models/registrationModel");
+const { User } = require("../models/userModel");
+const { ActivityLogger } = require("./activityLogService");
 const mongoose = require('mongoose');
 
 class AdminDashboardService {
+  // ==================== OVERVIEW STATS ====================
+  
   /**
-   * Get dashboard statistics
+   * Get overview statistics (simplified version)
+   */
+  async getOverviewStats() {
+    const [
+      totalUsers,
+      totalStaff,
+      totalAdmins,
+      totalRegistrations,
+      pendingApplications,
+      approvedApplications,
+      rejectedApplications,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "staff" }),
+      User.countDocuments({ role: "admin" }),
+      Registration.countDocuments(),
+      Registration.countDocuments({ status: { $in: ["submitted", "under_review"] } }),
+      Registration.countDocuments({ status: "approved" }),
+      Registration.countDocuments({ status: "rejected" }),
+    ]);
+
+    return {
+      totalUsers,
+      totalStaff,
+      totalAdmins,
+      totalRegistrations,
+      pendingApplications,
+      approvedApplications,
+      rejectedApplications,
+    };
+  }
+
+  /**
+   * Get comprehensive dashboard statistics (detailed version)
    */
   async getDashboardStats() {
     const today = new Date();
@@ -114,27 +149,37 @@ class AdminDashboardService {
     };
   }
 
+  // ==================== MONTHLY REGISTRATIONS ====================
+  
   /**
-   * Get recent activities
+   * Get monthly registration trends
    */
-  async getRecentActivities(limit = 20) {
-    const recentRegistrations = await Registration.find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .populate('applicantId', 'fullName email')
-      .populate('adminReview.reviewedBy', 'fullName')
-      .populate('staffReview.reviewedBy', 'fullName')
-      .select('status vehicle createdAt applicantId feeAmount');
-
-    const recentUsers = await User.find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .select('fullName email role createdAt isActive');
-
-    return {
-      recentRegistrations,
-      recentUsers,
-    };
+  async getMonthlyRegistrations() {
+    return Registration.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0,
+          month: {
+            $concat: [
+              { $toString: "$_id.month" },
+              "-",
+              { $toString: "$_id.year" },
+            ],
+          },
+          count: 1,
+        },
+      },
+    ]);
   }
 
   /**
@@ -142,7 +187,6 @@ class AdminDashboardService {
    */
   async getRegistrationTrends(period = 'monthly') {
     let groupBy = {};
-    let dateFormat = '';
     
     switch(period) {
       case 'daily':
@@ -151,14 +195,12 @@ class AdminDashboardService {
           month: { $month: '$createdAt' },
           day: { $dayOfMonth: '$createdAt' }
         };
-        dateFormat = '%Y-%m-%d';
         break;
       case 'weekly':
         groupBy = {
           year: { $year: '$createdAt' },
           week: { $week: '$createdAt' }
         };
-        dateFormat = '%Y-W%V';
         break;
       case 'monthly':
       default:
@@ -166,7 +208,6 @@ class AdminDashboardService {
           year: { $year: '$createdAt' },
           month: { $month: '$createdAt' }
         };
-        dateFormat = '%Y-%m';
         break;
     }
 
@@ -188,6 +229,59 @@ class AdminDashboardService {
     return trends;
   }
 
+  // ==================== TOP VEHICLE MODELS ====================
+  
+  /**
+   * Get top vehicle models by registration count
+   */
+  async getTopVehicleModels() {
+    return Registration.aggregate([
+      {
+        $group: {
+          _id: "$vehicle.model",
+          count: { $sum: 1 },
+          make: { $first: "$vehicle.make" },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          _id: 0,
+          model: "$_id",
+          make: 1,
+          count: 1,
+        },
+      },
+    ]);
+  }
+
+  // ==================== STATUS BREAKDOWN ====================
+  
+  /**
+   * Get status breakdown for registrations
+   */
+  async getStatusBreakdown() {
+    const result = await Registration.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    const formatted = {};
+    result.forEach((item) => {
+      formatted[item._id] = item.count;
+    });
+
+    return formatted;
+  }
+
+  // ==================== VEHICLE CLASS DISTRIBUTION ====================
+  
   /**
    * Get vehicle class distribution
    */
@@ -206,6 +300,8 @@ class AdminDashboardService {
     return distribution;
   }
 
+  // ==================== TOP USERS ====================
+  
   /**
    * Get top users by registrations
    */
@@ -234,6 +330,7 @@ class AdminDashboardService {
           _id: 1,
           fullName: '$user.fullName',
           email: '$user.email',
+          role: '$user.role',
           registrationCount: 1,
           totalPaid: 1
         }
@@ -243,6 +340,8 @@ class AdminDashboardService {
     return topUsers;
   }
 
+  // ==================== REVENUE BREAKDOWN ====================
+  
   /**
    * Get revenue breakdown by period
    */
@@ -317,6 +416,33 @@ class AdminDashboardService {
     };
   }
 
+  // ==================== RECENT ACTIVITIES ====================
+  
+  /**
+   * Get recent activities
+   */
+  async getRecentActivities(limit = 20) {
+    const recentRegistrations = await Registration.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('applicantId', 'fullName email')
+      .populate('adminReview.reviewedBy', 'fullName')
+      .populate('staffReview.reviewedBy', 'fullName')
+      .select('status vehicle createdAt applicantId feeAmount plateNumber');
+
+    const recentUsers = await User.find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select('fullName email role createdAt isActive');
+
+    return {
+      recentRegistrations,
+      recentUsers,
+    };
+  }
+
+  // ==================== USER ACTIVITY SUMMARY ====================
+  
   /**
    * Get user activity summary
    */
@@ -342,6 +468,8 @@ class AdminDashboardService {
     };
   }
 
+  // ==================== EXPORT DATA ====================
+  
   /**
    * Export data to CSV format
    */
@@ -408,6 +536,8 @@ class AdminDashboardService {
     return { headers, data };
   }
 
+  // ==================== SYSTEM HEALTH ====================
+  
   /**
    * Get system health status
    */

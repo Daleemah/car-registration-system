@@ -5,11 +5,12 @@ const crypto = require('crypto');
 const { ActivityLogger } = require('../services/activityLogService');
 const ErrorLogService = require('../services/errorLogService'); 
 const emailService = require('../services/emailService');
+const paginate = require('../utils/paginate');
 
 // REGISTER
 const register = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
+    console.log(req.body);
 
     const { fullName, email, password, phone, address, nin, role } = req.body;
 
@@ -610,7 +611,12 @@ const resetPassword = async (req, res) => {
 // ADMIN: GET ALL USERS WITH ACTIVITY
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select('-password');
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    
+    const { skip, limit: perPage } = paginate(page, limit);
+
+    const users = await User.find({}).select('-password').skip(skip).limit(perPage);
     
     // Get activity stats for each user
     const usersWithStats = await Promise.all(users.map(async (user) => {
@@ -620,7 +626,7 @@ const getAllUsers = async (req, res) => {
         sessionStats: stats
       };
     }));
-    
+
     res.status(200).json({
       success: true,
       data: usersWithStats
