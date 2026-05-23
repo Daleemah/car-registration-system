@@ -41,7 +41,7 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/activities', require('./routes/activityRoutes'));
 app.use('/api/error-logs', require('./routes/errorLogRoutes'));
 app.use("/api/admin/dashboard", require("./routes/adminDashboardRoutes"));
-
+app.use('/api/documents', require('./routes/documentRoutes'));
 
 
 // Health Check
