@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { ActivityLogger } = require('../services/activityLogService');
 const ErrorLogService = require('../services/errorLogService'); 
+const emailService = require('../services/emailService');
 const paginate = require('../utils/paginate');
 
 // REGISTER
@@ -36,6 +37,7 @@ const register = async (req, res) => {
       nin,
       role: role || "user",
     });
+    emailService.sendWelcomeEmail(user).catch(console.error);
 
     // Log the registration activity
     await ActivityLogger.logUserAction(
@@ -422,7 +424,7 @@ const changePassword = async (req, res) => {
     );
 
     // Optional: Send email notification about password change
-    // await sendPasswordChangeNotification(user.email, user.fullName);
+    await sendPasswordChangeNotification(user.email, user.fullName);
 
     res.status(200).json({
       success: true,

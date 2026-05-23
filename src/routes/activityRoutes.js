@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middlewares/authMiddleware');
+const { protect, requireRole } = require('../middlewares/authMiddleware'); 
 const { ActivityLogger, CentralLog } = require('../services/activityLogService');
-const asyncHandler = require('../utils/asyncHandler');
+const { asyncHandler } = require('../utils/asyncHandler');
 
 // Get activities for a specific registration
 router.get('/registrations/:id/activities', protect, asyncHandler(async (req, res) => {
@@ -45,7 +45,7 @@ router.get('/my-session-stats', protect, asyncHandler(async (req, res) => {
 }));
 
 // Get all system activities (admin only)
-router.get('/all-activities', protect, authorize('admin'), asyncHandler(async (req, res) => {
+router.get('/all-activities', protect, requireRole('admin'), asyncHandler(async (req, res) => { // ✅ Changed to requireRole
   const { 
     limit = 50, 
     skip = 0, 
@@ -70,25 +70,25 @@ router.get('/all-activities', protect, authorize('admin'), asyncHandler(async (r
 }));
 
 // Get user login history (admin only)
-router.get('/user-logins/:userId', protect, authorize('admin'), asyncHandler(async (req, res) => {
+router.get('/user-logins/:userId', protect, requireRole('admin'), asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const { limit = 50, skip = 0 } = req.query;
   
   const result = await ActivityLogger.getDocumentLogs(userId, 'User', {
     limit,
     skip,
-    action: { $in: ['login', 'login_failed', 'logout'] }
+    action: ['login', 'login_failed', 'logout']
   });
   
   res.status(200).json({ success: true, data: result });
 }));
 
 // Get activity statistics (admin only)
-router.get('/activity-stats', protect, authorize('admin'), asyncHandler(async (req, res) => {
+router.get('/activity-stats', protect, requireRole('admin'), asyncHandler(async (req, res) => {
   const stats = await CentralLog.aggregate([
     {
       $group: {
-        _id: { action: '$action', collection: '$collection' },
+        _id: { action: '$action', collection: '$modelName' },
         count: { $sum: 1 },
         uniqueUsers: { $addToSet: '$performedBy' }
       }

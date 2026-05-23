@@ -168,7 +168,7 @@ class ExpiryNotificationService {
     // Send email if configured
     if (this.transporter && user.email) {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@vehicle-registration.com',
+        from: process.env.SMTP_FROM || 'noreply@capstonevehicle-registration.com',
         to: user.email,
         subject: emailSubject,
         text: emailText,
@@ -251,7 +251,7 @@ class ExpiryNotificationService {
     
     if (this.transporter && user.email) {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@vehicle-registration.com',
+        from: process.env.SMTP_FROM || 'noreply@capstonevehicle-registration.com',
         to: user.email,
         subject: emailSubject,
         html: emailHtml
@@ -359,7 +359,7 @@ class ExpiryNotificationService {
     
     for (const admin of admins) {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || 'noreply@vehicle-registration.com',
+        from: process.env.SMTP_FROM || 'noreply@capstonevehicle-registration.com',
         to: admin.email,
         subject: 'Weekly Registration Expiry Report',
         html: emailHtml

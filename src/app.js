@@ -36,10 +36,12 @@ app.use('/api/', limiter);
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/registrations', require('./routes/registrationRoutes'));
+app.use('/api/expiry', require('./routes/expiryRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/activities', require('./routes/activityRoutes'));
+app.use('/api/error-logs', require('./routes/errorLogRoutes'));
 app.use("/api/admin/dashboard", require("./routes/adminDashboardRoutes"));
 
-
-// app.use('/api/expiry', require('./routes/expiryRoutes')); // ✅ Add expiry routes
 
 
 // Health Check
