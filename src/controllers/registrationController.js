@@ -1,5 +1,7 @@
 const { asyncHandler } = require("../utils/asyncHandler");
 const registrationService = require("../services/registrationService");
+const emailService = require("../services/emailService"); // ✅ Add this import
+const { User } = require("../models/userModel"); // ✅ Add this import
 
 // ==================== USER METHODS ====================
 const createRegistration = asyncHandler(async (req, res) => {
@@ -8,6 +10,10 @@ const createRegistration = asyncHandler(async (req, res) => {
     req.body,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send car registration confirmation email
+  emailService.sendCarRegistrationConfirmation(reg, req.user).catch(console.error);
+  
   res.status(201).json({ success: true, data: reg });
 });
 
@@ -61,6 +67,11 @@ const submitRegistration = asyncHandler(async (req, res) => {
     req.user._id,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send status update email
+  const user = await User.findById(req.user._id);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'submitted', 'Your application has been submitted for review.').catch(console.error);
+
   res.json({ success: true, message: "Registration submitted for staff review", data: reg });
 });
 
@@ -73,6 +84,10 @@ const capturePayment = asyncHandler(async (req, res) => {
     amount,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send payment confirmation email
+  emailService.sendPaymentConfirmation(reg, req.user, amount, paymentReference).catch(console.error);
+  
   res.json({ success: true, data: reg });
 });
 
@@ -94,6 +109,11 @@ const startStaffReview = asyncHandler(async (req, res) => {
     req.user._id,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send status update email
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'under_review', 'Your application is now being reviewed by our staff.').catch(console.error);
+  
   res.json({ success: true, message: "Staff review started", data: reg });
 });
 
@@ -105,6 +125,11 @@ const staffRecommendApproval = asyncHandler(async (req, res) => {
     comments,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Fixed: Send 'recommended' status (not 'under_review')
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'recommended', comments || 'Staff has recommended your application for approval. Awaiting admin final review.').catch(console.error);
+  
   res.json({ success: true, message: "Staff recommended approval", data: reg });
 });
 
@@ -116,6 +141,11 @@ const staffRequestChanges = asyncHandler(async (req, res) => {
     comments,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Fixed: Send 'draft' status with changes requested message
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'draft', `Changes requested: ${comments || 'Please review and update your application.'}`).catch(console.error);
+  
   res.json({ success: true, message: "Changes requested", data: reg });
 });
 
@@ -128,6 +158,11 @@ const adminApproveRegistration = asyncHandler(async (req, res) => {
     notes,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send approval email
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'approved', notes || 'Your registration has been approved! Your plate number has been issued.').catch(console.error);
+  
   res.json({ success: true, message: "Registration approved by admin", data: reg });
 });
 
@@ -139,6 +174,11 @@ const adminRejectRegistration = asyncHandler(async (req, res) => {
     reason,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  // ✅ Send rejection email
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'rejected', reason || 'Your registration has been rejected.').catch(console.error);
+  
   res.json({ success: true, message: "Registration rejected by admin", data: reg });
 });
 
@@ -153,6 +193,10 @@ const approveRegistration = asyncHandler(async (req, res) => {
       notes,
       { ip: req.ip, userAgent: req.get('user-agent') }
     );
+    
+    const user = await User.findById(reg.applicantId);
+    emailService.sendRegistrationStatusUpdate(reg, user, 'approved', notes || 'Your registration has been approved!').catch(console.error);
+    
     res.json({ success: true, message: "Registration approved", data: reg });
   } else {
     const reg = await registrationService.staffRecommendApproval(
@@ -161,6 +205,10 @@ const approveRegistration = asyncHandler(async (req, res) => {
       notes,
       { ip: req.ip, userAgent: req.get('user-agent') }
     );
+    
+    const user = await User.findById(reg.applicantId);
+    emailService.sendRegistrationStatusUpdate(reg, user, 'recommended', notes || 'Staff has recommended your application for approval.').catch(console.error);
+    
     res.json({ success: true, message: "Registration recommended for approval", data: reg });
   }
 });
@@ -173,6 +221,10 @@ const rejectRegistration = asyncHandler(async (req, res) => {
     reason,
     { ip: req.ip, userAgent: req.get('user-agent') }
   );
+  
+  const user = await User.findById(reg.applicantId);
+  emailService.sendRegistrationStatusUpdate(reg, user, 'rejected', reason || 'Your registration has been rejected.').catch(console.error);
+  
   res.json({ success: true, message: "Registration rejected", data: reg });
 });
 
