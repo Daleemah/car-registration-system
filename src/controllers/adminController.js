@@ -2,17 +2,34 @@ const adminDashboardService = require('../services/adminDashboardService');
 const { asyncHandler } = require('../utils/asyncHandler');
 const json2csv = require('json2csv').parse;
 
-// Get dashboard statistics
+// Get overview statistics (simplified)
+const getOverviewStats = asyncHandler(async (req, res) => {
+  const stats = await adminDashboardService.getOverviewStats();
+  res.json({ success: true, data: stats });
+});
+
+// Get comprehensive dashboard statistics
 const getDashboardStats = asyncHandler(async (req, res) => {
   const stats = await adminDashboardService.getDashboardStats();
   res.json({ success: true, data: stats });
 });
 
-// Get recent activities
-const getRecentActivities = asyncHandler(async (req, res) => {
-  const { limit = 20 } = req.query;
-  const activities = await adminDashboardService.getRecentActivities(parseInt(limit));
-  res.json({ success: true, data: activities });
+// Get monthly registrations
+const getMonthlyRegistrations = asyncHandler(async (req, res) => {
+  const data = await adminDashboardService.getMonthlyRegistrations();
+  res.json({ success: true, data });
+});
+
+// Get top vehicle models
+const getTopVehicleModels = asyncHandler(async (req, res) => {
+  const data = await adminDashboardService.getTopVehicleModels();
+  res.json({ success: true, data });
+});
+
+// Get status breakdown
+const getStatusBreakdown = asyncHandler(async (req, res) => {
+  const data = await adminDashboardService.getStatusBreakdown();
+  res.json({ success: true, data });
 });
 
 // Get registration trends
@@ -39,6 +56,13 @@ const getTopUsers = asyncHandler(async (req, res) => {
 const getRevenueBreakdown = asyncHandler(async (req, res) => {
   const revenue = await adminDashboardService.getRevenueBreakdown();
   res.json({ success: true, data: revenue });
+});
+
+// Get recent activities
+const getRecentActivities = asyncHandler(async (req, res) => {
+  const { limit = 20 } = req.query;
+  const activities = await adminDashboardService.getRecentActivities(parseInt(limit));
+  res.json({ success: true, data: activities });
 });
 
 // Get user activity summary
@@ -77,12 +101,16 @@ const getSystemHealth = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getOverviewStats,
   getDashboardStats,
-  getRecentActivities,
+  getMonthlyRegistrations,
+  getTopVehicleModels,
+  getStatusBreakdown,
   getRegistrationTrends,
   getVehicleClassDistribution,
   getTopUsers,
   getRevenueBreakdown,
+  getRecentActivities,
   getUserActivitySummary,
   exportData,
   getSystemHealth,
