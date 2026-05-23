@@ -1,10 +1,9 @@
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
-  vehicleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle'
-  },
+vehicleId: {
+  type: String
+},  
   documentType: String,
   fileUrl: String,
   status: {
@@ -12,10 +11,8 @@ const documentSchema = new mongoose.Schema({
     default: 'pending'
   },
   submittedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
+    type: String
+},
 }, { timestamps: true });
 
-module.exports = mongoose.model('Document', documentSchema);0
-
+module.exports = mongoose.model('Document', documentSchema);

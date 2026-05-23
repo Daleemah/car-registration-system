@@ -5,22 +5,18 @@ const {
   submitDocument,
   getVehicleDocuments,
   verifyDocument,
-  rejectDocument
+  rejectDocument,
+  deleteAllDocuments
 } = require('../controllers/documentController');
 
-const { protect, requireRole } = require('../middlewares/authMiddleware');
 
 // Submit document
-router.post('/', protect, submitDocument);
-
+router.post('/', submitDocument);
 // Get documents for a vehicle
-router.get('/:vehicleId', protect, getVehicleDocuments);
-
+router.get('/:vehicleId', getVehicleDocuments);
 // Verify document (staff only)
-router.put('/:id/verify', protect, requireRole('staff'), verifyDocument);
-
+router.put('/:id/verify', verifyDocument);
 // Reject document (staff only)
-router.put('/:id/reject', protect, requireRole('staff'), rejectDocument);
-
-module.exports = router;0
-
+router.put('/:id/reject', rejectDocument);
+module.exports = router;
+router.delete('/clear', deleteAllDocuments);
