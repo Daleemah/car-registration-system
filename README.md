@@ -33,6 +33,7 @@ Unlike conventional CRUD-based registration systems, DriveCore was designed as a
 | [Ojo Folarin](https://github.com/folsman) | Team Member |
 | [Sobowale Elijah Adedayo](https://github.com/eliyhung) | Team Member |
 | [Dada Peter](https://github.com/Zerogambitt) | Team Member |
+| [Hamzat Gomez](https://github.com/Geniusgomez) | Team Member |
 
 ---
 <img width="1024" height="1024" alt="Group 18" src="https://github.com/user-attachments/assets/5052727f-d79f-4174-ba6a-893dc1849bb7" />
