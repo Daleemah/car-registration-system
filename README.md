@@ -20,7 +20,7 @@ Unlike conventional CRUD-based registration systems, DriveCore was designed as a
 
 ---
 
-## Team
+## Team (Group 18)
 
 | GitHub | Role |
 |---|---|
