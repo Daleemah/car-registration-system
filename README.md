@@ -34,8 +34,8 @@ Unlike conventional CRUD-based registration systems, DriveCore was designed as a
 | [Sobowale Elijah Adedayo](https://github.com/eliyhung) | Team Member |
 
 ---
-<img width="1254" height="1254" alt="Idongesit Inyang" src="https://github.com/user-attachments/assets/57fa58e6-192a-4626-bc46-df393dc42014" />
-<img width="1122" height="1402" alt="Ata Ayobami" src="https://github.com/user-attachments/assets/741eb3c4-534e-4e20-8931-dcbe1a47465e" />
+<img width="1024" height="1024" alt="Group 18" src="https://github.com/user-attachments/assets/5052727f-d79f-4174-ba6a-893dc1849bb7" />
+
 <img width="1919" height="886" alt="brave_screenshot_meet google com (5)" src="https://github.com/user-attachments/assets/a9b7b0a4-56a5-40ca-878e-7802335ffe2d" />
 
 
