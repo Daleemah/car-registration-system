@@ -25,10 +25,14 @@ Unlike conventional CRUD-based registration systems, DriveCore was designed as a
 | GitHub | Role |
 |---|---|
 | [Idongesit Inyang](https://github.com/ID-Inyang) | Team Lead |
+<img width="1254" height="1254" alt="Idongesit Inyang" src="https://github.com/user-attachments/assets/57fa58e6-192a-4626-bc46-df393dc42014" />
+
 | [Olaoluwa Odebela](https://github.com/olexxy410) | Team Lead & Core Contributor|
 | [Adelani Halimah Ayobami](https://github.com/Daleemah) | Team Lead |
 | [Faith Akinsuyi](https://github.com/suyill) | Team Member |
 | [Ayobami Ata](https://github.com/Ayobamiata) | Team Member |
+<img width="1122" height="1402" alt="Ata Ayobami" src="https://github.com/user-attachments/assets/741eb3c4-534e-4e20-8931-dcbe1a47465e" />
+
 | [Ridwan Balogun](https://github.com/asyncridwan) | Team Member |
 | [Ojo Folarin](https://github.com/folsman) | Team Member |
 | [Sobowale Elijah Adedayo](https://github.com/eliyhung) | Team Member |
