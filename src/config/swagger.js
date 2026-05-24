@@ -226,14 +226,4 @@ const options = {
 
 const swaggerSpec = swaggerJsdoc(options);
 
-const resolvedPath = path.join(__dirname, '../routes/*.js');
-console.log('Resolved glob path:', resolvedPath);
-console.log('Does the directory exist?', require('fs').existsSync(path.dirname(resolvedPath)));
-console.log('Files in that directory:', require('fs').readdirSync(path.dirname(resolvedPath)));
-
-console.log('Number of API files found:', swaggerSpec.paths ? Object.keys(swaggerSpec.paths).length : 0);
-console.log('Paths:', Object.keys(swaggerSpec.paths || {}));
-
-// const swaggerSpec = swaggerJsdoc(options);
-
 module.exports = swaggerSpec;
