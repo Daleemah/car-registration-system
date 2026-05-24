@@ -758,12 +758,6 @@ DriveCore is environment-configured and deployment-ready. It can be deployed to:
 
 ---
 
-## License
-
-This project is licensed under the MIT License.
-
----
-
 ## Final Notes
 
 DriveCore was built to demonstrate backend engineering principles beyond traditional CRUD application development.
